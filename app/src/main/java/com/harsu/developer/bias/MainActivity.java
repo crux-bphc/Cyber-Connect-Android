@@ -1,85 +1,39 @@
 package com.harsu.developer.bias;
 
-import android.app.ProgressDialog;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SwitchCompat;
 import android.view.View;
-import android.widget.Button;
-import android.widget.Toast;
+import android.widget.ImageView;
+import android.widget.TextView;
 
-import helper.LoginController;
-
-public class MainActivity extends AppCompatActivity implements LoginController.ConnectionListener {
-
-    public static final String CREDENTIALS = "com.harsu.developer.bias.credentials";
-    TextInputLayout username, password;
-    ProgressDialog progressDialog;
+public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Button login = (Button) findViewById(R.id.login);
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setMessage("Logging in...");
-        progressDialog.setCancelable(false);
 
-
-        username = (TextInputLayout) findViewById(R.id.username);
-        password = (TextInputLayout) findViewById(R.id.password);
-        login.setOnClickListener(new View.OnClickListener() {
+        TextView account = (TextView) findViewById(R.id.account);
+        final SharedPreferences sharedPreferences = getSharedPreferences(LoginActivity.CREDENTIALS, MODE_PRIVATE);
+        account.setText(sharedPreferences.getString("username", ""));
+        boolean autoConnect = sharedPreferences.getBoolean("autoConnect", true);
+        SwitchCompat autoConnectSwitch = (SwitchCompat) findViewById(R.id.autoConnect);
+        autoConnectSwitch.setChecked(autoConnect);
+        ImageView deleteUser = (ImageView) findViewById(R.id.delete);
+        deleteUser.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (isValid()) {
-                    storeData();
-                    LoginController.login(MainActivity.this, MainActivity.this);
-                    progressDialog.show();
-                }
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("username", "");
+                editor.putString("password", "");
+                editor.putBoolean("autoConnect", true);
+                editor.commit();
+                startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                MainActivity.this.finish();
             }
         });
-
-    }
-
-
-    private void storeData() {
-        SharedPreferences.Editor editor = getSharedPreferences(CREDENTIALS, MODE_PRIVATE).edit();
-        editor.putString("username", username.getEditText().getText().toString());
-        editor.putString("password", password.getEditText().getText().toString());
-        editor.commit();
-    }
-
-    private boolean isValid() {
-        boolean flag = true;
-        if (username.getEditText().getText().toString().isEmpty()) {
-            username.setError("This field cannot be Empty");
-            flag = false;
-        }
-//       todo else if(check input format)
-        if (password.getEditText().getText().toString().isEmpty()) {
-            password.setError("This field cannot be Empty");
-            flag = false;
-        }
-        return flag;
-    }
-
-    @Override
-    public void success() {
-        progressDialog.dismiss();
-        Toast.makeText(this, "Success", Toast.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void error(int error) {
-        progressDialog.dismiss();
-        if (error == LoginController.Error.WRONG_CREDENTIALS)
-            Toast.makeText(this, "Please check your credentials!", Toast.LENGTH_SHORT).show();
-        else if (error == LoginController.Error.DATA_LIMIT) {
-            Toast.makeText(this, "Data limit exceeded", Toast.LENGTH_SHORT).show();
-        } else if (error == LoginController.Error.WRONG_WIFI) {
-            Toast.makeText(this, "This connection has no Access to Bits network", Toast.LENGTH_SHORT).show();
-        } else if (error == LoginController.Error.SERVER_ERRROR)
-            Toast.makeText(this, "Server error occured. Please Retry", Toast.LENGTH_SHORT).show();
     }
 }
