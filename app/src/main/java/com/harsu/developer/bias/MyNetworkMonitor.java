@@ -38,8 +38,11 @@ public class MyNetworkMonitor extends BroadcastReceiver {
                 NotificationCompat.Builder mBuilder =
                         new NotificationCompat.Builder(context)
                                 .setSmallIcon(R.mipmap.ic_launcher)
+                                .setPriority(NotificationCompat.PRIORITY_MAX)
+                                .setVibrate(new long[] {1, 1, 1})
                                 .setContentTitle("Cyber Client")
-                                .setContentText("Attempting to login");
+                                .setContentText("Attempting to login")
+                                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);;
                 mNotifyMgr.notify(1, mBuilder.build());
                 LoginController.login(context, new LoginController.ConnectionListener() {
                     @Override
@@ -47,8 +50,11 @@ public class MyNetworkMonitor extends BroadcastReceiver {
                         NotificationCompat.Builder mBuilder =
                                 new NotificationCompat.Builder(context)
                                         .setSmallIcon(R.mipmap.ic_launcher)
+                                        .setPriority(NotificationCompat.PRIORITY_MAX)
+                                        .setVibrate(new long[] {1, 1, 1})
                                         .setContentTitle("Cyber Client")
-                                        .setContentText("Successfully signed in");
+                                        .setContentText("Successfully signed in")
+                                        .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);;
                         //todo add a logout button on notification
                         mNotifyMgr.notify(1, mBuilder.build());
                     }
@@ -61,7 +67,6 @@ public class MyNetworkMonitor extends BroadcastReceiver {
                         else {
                             String message = "";
                             if (error == LoginController.Error.SERVER_ERRROR) {
-
                                 message = "Server error";
                             } else if (error == LoginController.Error.DATA_LIMIT) {
                                 message = "Data limit exceeded";
@@ -71,8 +76,11 @@ public class MyNetworkMonitor extends BroadcastReceiver {
                             NotificationCompat.Builder mBuilder =
                                     new NotificationCompat.Builder(context)
                                             .setSmallIcon(R.mipmap.ic_launcher)
+                                            .setPriority(NotificationCompat.PRIORITY_MAX)
+                                            .setVibrate(new long[] {1, 1, 1})
                                             .setContentTitle("Cyber Client")
-                                            .setContentText(message);
+                                            .setContentText(message)
+                                            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);;
                             //todo add a retry Button on notification
                             mNotifyMgr.notify(1, mBuilder.build());
                         }
