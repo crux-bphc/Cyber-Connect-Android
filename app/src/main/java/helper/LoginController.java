@@ -31,7 +31,7 @@ import static com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT;
 public class LoginController {
 
     static String loginURL = "http://172.16.0.30:8090/login.xml";
-
+    static String logoutURL= "http://172.16.0.30:8090/logout.xml";
 
     public static boolean isConnected(Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -141,6 +141,59 @@ public class LoginController {
             }
         };
         stringRequest.setRetryPolicy(new DefaultRetryPolicy(2000, 0, DEFAULT_BACKOFF_MULT));
+        app.VolleySingleton.getInstance().getRequestQueue().add(stringRequest);
+
+    }
+
+
+    public static void logout(Context context, @Nullable final ConnectionListener listener) {
+        final SharedPreferences sharedPreferences = context.getSharedPreferences(LoginActivity.CREDENTIALS, Context.MODE_PRIVATE);
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, logoutURL, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String s) {
+                //success
+                //<?xml version='1.0' ?><requestresponse><status><![CDATA[LIVE]]></status><message><![CDATA[You have successfully logged in]]></message><logoutmessage><![CDATA[You have successfully logged off]]></logoutmessage><state><![CDATA[]]></state></requestresponse>
+
+                Log.e("response", s);
+                if (listener != null) {
+                    if (s.contains("You have successfully logged off")) {
+                        listener.success();
+                    } else if (s.contains("Server is not responding.")) {
+                        listener.error(Error.SERVER_ERRROR);
+                    }
+                }
+
+
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError volleyError) {
+
+                if (listener != null) {
+                    listener.error(Error.WRONG_WIFI);
+                }
+            }
+        }) {
+
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                Map<String, String> b = new HashMap<>();
+                b.put("Content-Type", "application/x-www-form-urlencoded");
+                //Headers is not needed. It works with params alone supplied
+                return b;
+            }
+
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+
+                Map<String, String> params = new HashMap<String, String>();
+                params.put("mode", "193");
+                params.put("username", sharedPreferences.getString("username", ""));
+                //Other parameters such are time, producttype are not needed, even for login
+                return params;
+
+            }
+        };
         app.VolleySingleton.getInstance().getRequestQueue().add(stringRequest);
 
     }
