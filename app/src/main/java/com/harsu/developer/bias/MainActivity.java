@@ -7,10 +7,13 @@ import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SwitchCompat;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import helper.LoginController;
@@ -70,12 +73,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         actionB = (Button) findViewById(R.id.actionButton);
         statusStorer = StatusStorer.getInstance();
-        if(statusStorer.getStatus()== StatusStorer.Status.DISCONNECTED){
-            LoginController.analyseNetwork(this);
-        }
-
+        final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progressBar);
         statusTV = (TextView) findViewById(R.id.status);
         statusTV.setText(statusStorer.getStatusText());
+        if (statusStorer.getState() == StatusStorer.State.active) {
+            progressBar.setVisibility(View.VISIBLE);
+        } else {
+            progressBar.setVisibility(View.INVISIBLE);
+        }
         setAction(statusStorer.getStatus());
         statusStorer.setStatusListener(new StatusStorer.StatusListener() {
             @Override
@@ -83,14 +88,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 statusTV.setText(status);
                 setAction(statusStorer.getStatus());
             }
+
+            @Override
+            public void newState(int state) {
+                if (state == StatusStorer.State.active) {
+                    progressBar.setVisibility(View.VISIBLE);
+                } else {
+                    progressBar.setVisibility(View.INVISIBLE);
+                }
+            }
         });
+        if (statusStorer.getStatus() == StatusStorer.Status.DISCONNECTED) {
+            LoginController.analyseNetwork(this);
+        }
+
         actionB.setOnClickListener(this);
     }
 
     private void setAction(int status) {
         switch (status) {
             case StatusStorer.Status.ERROR_LOGGING:
-                actionB.setText("retry");
+                actionB.setText("Retry");
                 actionB.setVisibility(View.VISIBLE);
                 break;
             case StatusStorer.Status.NOT_BITS_NETWORK:
@@ -127,6 +145,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.info) {
+            startActivity(new Intent(this, InfoActivity.class));
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
     public void onClick(View view) {
         if (view.getId() == R.id.actionButton) {
             switch (statusStorer.getStatus()) {
@@ -156,7 +189,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                         @Override
                         public void error(int error) {
-                            statusTV.setText("Error Logging Out");
+                            statusTV.setText("Error Logging Out.");
                         }
                     });
                     break;

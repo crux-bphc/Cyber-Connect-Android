@@ -224,6 +224,7 @@ public class LoginController {
 
     public static void analyseNetwork(final Context context) {
         final StatusStorer statusStorer = StatusStorer.getInstance();
+        statusStorer.setState(StatusStorer.State.active);
         if (LoginController.isConnected(context))//wifi state is connected
         {
             statusStorer.setStatus(StatusStorer.Status.CONNECTED);
@@ -231,14 +232,18 @@ public class LoginController {
                 @Override
                 public void success() {
                     statusStorer.setStatus(StatusStorer.Status.ALREADY_LOGGED_IN);
+                    statusStorer.setState(StatusStorer.State.dormant);
                 }
 
                 @Override
                 public void error(int error) {
+                    statusStorer.setState(StatusStorer.State.dormant);
                     //not signed in, or internet is extremely slow, nothing can be done
                 }
             });
 
+        } else {
+            statusStorer.setState(StatusStorer.State.dormant);
         }
 
     }

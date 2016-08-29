@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.design.widget.TextInputLayout;
 import android.support.v7.app.AppCompatActivity;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -45,6 +47,20 @@ public class LoginActivity extends AppCompatActivity implements LoginController.
 
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.info) {
+            startActivity(new Intent(this, InfoActivity.class));
+            return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
 
     private void storeData() {
         SharedPreferences.Editor editor = getSharedPreferences(CREDENTIALS, MODE_PRIVATE).edit();

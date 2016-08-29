@@ -32,9 +32,7 @@ public class MyNetworkMonitor extends BroadcastReceiver {
         }
 
         statusStorer = StatusStorer.getInstance();
-
         sharedPreferences = context.getSharedPreferences(LoginActivity.CREDENTIALS, MODE_PRIVATE);
-
 
         final NotificationManager mNotifyMgr =
                 (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
@@ -52,6 +50,7 @@ public class MyNetworkMonitor extends BroadcastReceiver {
                     @Override
                     public void success() {
                         //already signed in
+                        statusStorer.setState(StatusStorer.State.dormant);
                         if (statusStorer.getStatus() == StatusStorer.Status.CONNECTED)
                             firstConnect = false;
                         statusStorer.setStatus(StatusStorer.Status.ALREADY_LOGGED_IN);
@@ -61,8 +60,10 @@ public class MyNetworkMonitor extends BroadcastReceiver {
                     public void error(int error) {
                         //not signed in, or internet is extremely slow, nothing can be done
 
-                        if (!sharedPreferences.getBoolean("autoConnect", true))
+                        if (!sharedPreferences.getBoolean("autoConnect", true)) {
+                            statusStorer.setState(StatusStorer.State.dormant);
                             return;
+                        }
                         if (firstConnect)
                             attemptLogIn(context, pendingIntent, mNotifyMgr);
 
@@ -74,6 +75,7 @@ public class MyNetworkMonitor extends BroadcastReceiver {
             mNotifyMgr.cancel(1);
             statusStorer.setStatus(StatusStorer.Status.DISCONNECTED);
             firstConnect = true;
+            statusStorer.setState(StatusStorer.State.active);
         }
     }
 
@@ -94,6 +96,7 @@ public class MyNetworkMonitor extends BroadcastReceiver {
         LoginController.login(context, new LoginController.ConnectionListener() {
             @Override
             public void success() {
+                statusStorer.setState(StatusStorer.State.dormant);
                 NotificationCompat.Builder mBuilder =
                         new NotificationCompat.Builder(context)
                                 .setSmallIcon(R.mipmap.ic_launcher)
@@ -108,7 +111,7 @@ public class MyNetworkMonitor extends BroadcastReceiver {
 
             @Override
             public void error(int error) {
-
+                statusStorer.setState(StatusStorer.State.dormant);
                 firstConnect = false;
                 statusStorer.setError(error);
                 if (error == LoginController.Error.WRONG_WIFI) {

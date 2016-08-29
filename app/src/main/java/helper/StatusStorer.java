@@ -29,8 +29,8 @@ public class StatusStorer {
     }
 
     public void setStatus(int status) {
-        if (this.status == Status.LOGGED_IN || this.status == Status.ERROR_LOGGING || this.status==Status.ALREADY_LOGGED_IN) {
-            if (status == Status.CONNECTED || status==Status.ALREADY_LOGGED_IN) {
+        if (this.status == Status.LOGGED_IN || this.status == Status.ERROR_LOGGING || this.status == Status.ALREADY_LOGGED_IN) {
+            if (status == Status.CONNECTED || status == Status.ALREADY_LOGGED_IN) {
                 return;
             }
         }
@@ -72,6 +72,24 @@ public class StatusStorer {
         this.error = error;
     }
 
+    public void setState(int st) {
+        state = st;
+        if (listener != null) {
+            listener.newState(st);
+        }
+    }
+
+    public int getState() {
+        return state;
+    }
+
+    private int state = State.active;
+
+    public interface State {
+        int active = 1;
+        int dormant = 2;
+    }
+
     public interface Status {
         int ERROR_LOGGING = -1;
         int NOT_BITS_NETWORK = 0;
@@ -84,5 +102,7 @@ public class StatusStorer {
 
     public interface StatusListener {
         void newStatus(String status);
+
+        void newState(int state);
     }
 }

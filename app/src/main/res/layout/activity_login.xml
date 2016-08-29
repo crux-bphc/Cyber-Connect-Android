@@ -11,6 +11,21 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.harsu.developer.bias.LoginActivity">
 
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@mipmap/ic_launcher" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginTop="16dp"
+        android:text="Login using BITS Cyberroam Credentials"
+        android:textColor="#000"
+        android:textSize="16sp" />
+
     <android.support.design.widget.TextInputLayout
         android:id="@+id/username"
         android:layout_width="match_parent"
@@ -40,4 +55,9 @@
         android:layout_height="wrap_content"
         android:text="Login" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="PS - You must be connected to BITS hyderabad Network to successfully Login. " />
 </LinearLayout>
