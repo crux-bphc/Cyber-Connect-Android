@@ -84,6 +84,7 @@ public class LoginController {
     }
 
     public static void login(final String username, final String password, final ConnectionListener listener) {
+        final StatusStorer statusStorer = StatusStorer.getInstance();
         StringRequest stringRequest = new StringRequest(Request.Method.POST, loginURL, new Response.Listener<String>() {
             @Override
             public void onResponse(String s) {
@@ -100,6 +101,7 @@ public class LoginController {
                 if (listener != null) {
                     if (s.contains("You have successfully logged in")) {
                         listener.success();
+                        statusStorer.setStatus(StatusStorer.Status.LOGGED_IN);
                     } else if (s.contains("Your data transfer has been exceeded")) {
                         listener.error(Error.DATA_LIMIT);
                     } else if (s.contains("Your credentials were incorrect")) {
@@ -149,6 +151,7 @@ public class LoginController {
 
 
     public static void logout(Context context, @Nullable final ConnectionListener listener) {
+        final StatusStorer statusStorer = StatusStorer.getInstance();
         final SharedPreferences sharedPreferences = context.getSharedPreferences(LoginActivity.CREDENTIALS, Context.MODE_PRIVATE);
         StringRequest stringRequest = new StringRequest(Request.Method.POST, logoutURL, new Response.Listener<String>() {
             @Override
@@ -217,6 +220,27 @@ public class LoginController {
         stringRequest.setShouldCache(false);
         VolleySingleton.getInstance().getRequestQueue().add(stringRequest);
         return false;
+    }
+
+    public static void analyseNetwork(final Context context) {
+        final StatusStorer statusStorer = StatusStorer.getInstance();
+        if (LoginController.isConnected(context))//wifi state is connected
+        {
+            statusStorer.setStatus(StatusStorer.Status.CONNECTED);
+            LoginController.checkGoogleServer(new ConnectionListener() {
+                @Override
+                public void success() {
+                    statusStorer.setStatus(StatusStorer.Status.ALREADY_LOGGED_IN);
+                }
+
+                @Override
+                public void error(int error) {
+                    //not signed in, or internet is extremely slow, nothing can be done
+                }
+            });
+
+        }
+
     }
 
 

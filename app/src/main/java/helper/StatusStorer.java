@@ -29,8 +29,8 @@ public class StatusStorer {
     }
 
     public void setStatus(int status) {
-        if (this.status == Status.LOGGED_IN || this.status == Status.ERROR_LOGGING) {
-            if (status == Status.CONNECTED) {
+        if (this.status == Status.LOGGED_IN || this.status == Status.ERROR_LOGGING || this.status==Status.ALREADY_LOGGED_IN) {
+            if (status == Status.CONNECTED || status==Status.ALREADY_LOGGED_IN) {
                 return;
             }
         }
@@ -54,6 +54,8 @@ public class StatusStorer {
                 return "Successfully Signed In";
             case Status.DISCONNECTED:
                 return "Not Connected To A Wifi Network";
+            case Status.ALREADY_LOGGED_IN:
+                return "The network is Active";
         }
         return "";
     }
@@ -62,12 +64,12 @@ public class StatusStorer {
         this.listener = listener;
     }
 
-    public void setError(int error) {
-        this.error = error;
-    }
-
     public int getError() {
         return error;
+    }
+
+    public void setError(int error) {
+        this.error = error;
     }
 
     public interface Status {
@@ -77,6 +79,7 @@ public class StatusStorer {
         int LOGGING_IN = 2;
         int LOGGED_IN = 3;
         int DISCONNECTED = 4;
+        int ALREADY_LOGGED_IN = 5;
     }
 
     public interface StatusListener {

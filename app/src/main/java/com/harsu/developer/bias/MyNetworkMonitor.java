@@ -46,19 +46,26 @@ public class MyNetworkMonitor extends BroadcastReceiver {
         if (LoginController.isConnected(context))//wifi state is connected
         {
             statusStorer.setStatus(StatusStorer.Status.CONNECTED);
-            if (!sharedPreferences.getBoolean("autoConnect", true))
-                return;
 
             if (firstConnect) {
                 LoginController.checkGoogleServer(new LoginController.ConnectionListener() {
                     @Override
                     public void success() {
-
+                        //already signed in
+                        if (statusStorer.getStatus() == StatusStorer.Status.CONNECTED)
+                            firstConnect = false;
+                        statusStorer.setStatus(StatusStorer.Status.ALREADY_LOGGED_IN);
                     }
 
                     @Override
                     public void error(int error) {
-                        attemptLogIn(context, pendingIntent, mNotifyMgr);
+                        //not signed in, or internet is extremely slow, nothing can be done
+
+                        if (!sharedPreferences.getBoolean("autoConnect", true))
+                            return;
+                        if (firstConnect)
+                            attemptLogIn(context, pendingIntent, mNotifyMgr);
+
                     }
                 });
 
@@ -71,8 +78,8 @@ public class MyNetworkMonitor extends BroadcastReceiver {
     }
 
     private void attemptLogIn(final Context context, final PendingIntent pendingIntent, final NotificationManager mNotifyMgr) {
-        statusStorer.setStatus(StatusStorer.Status.LOGGING_IN);
         firstConnect = false;
+        statusStorer.setStatus(StatusStorer.Status.LOGGING_IN);
         Log.d(TAG, "Logging in");
         final NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context)
@@ -87,7 +94,6 @@ public class MyNetworkMonitor extends BroadcastReceiver {
         LoginController.login(context, new LoginController.ConnectionListener() {
             @Override
             public void success() {
-                statusStorer.setStatus(StatusStorer.Status.LOGGED_IN);
                 NotificationCompat.Builder mBuilder =
                         new NotificationCompat.Builder(context)
                                 .setSmallIcon(R.mipmap.ic_launcher)
