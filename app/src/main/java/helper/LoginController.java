@@ -22,6 +22,8 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
+import app.VolleySingleton;
+
 import static com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT;
 
 /**
@@ -31,7 +33,7 @@ import static com.android.volley.DefaultRetryPolicy.DEFAULT_BACKOFF_MULT;
 public class LoginController {
 
     static String loginURL = "http://172.16.0.30:8090/login.xml";
-    static String logoutURL= "http://172.16.0.30:8090/logout.xml";
+    static String logoutURL = "http://172.16.0.30:8090/logout.xml";
 
     public static boolean isConnected(Context context) {
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -103,7 +105,7 @@ public class LoginController {
                     } else if (s.contains("Your credentials were incorrect")) {
                         listener.error(Error.WRONG_CREDENTIALS);
                     } else if (s.contains("Server is not responding.")) {
-                        listener.error(Error.SERVER_ERRROR);
+                        listener.error(Error.SERVER_ERROR);
                     }
                 }
 
@@ -159,7 +161,7 @@ public class LoginController {
                     if (s.contains("You have successfully logged off")) {
                         listener.success();
                     } else if (s.contains("Server is not responding.")) {
-                        listener.error(Error.SERVER_ERRROR);
+                        listener.error(Error.SERVER_ERROR);
                     }
                 }
 
@@ -198,6 +200,25 @@ public class LoginController {
 
     }
 
+    public static boolean checkGoogleServer(final ConnectionListener listener) {
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, "https://www.google.com/", new Response.Listener<String>() {
+            @Override
+            public void onResponse(String s) {
+                Log.d("Google Response", s);
+                listener.success();
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError volleyError) {
+                Log.d("Google Error", volleyError.toString());
+                listener.error(Error.SERVER_ERROR);
+            }
+        });
+        stringRequest.setShouldCache(false);
+        VolleySingleton.getInstance().getRequestQueue().add(stringRequest);
+        return false;
+    }
+
 
     public interface ConnectionListener {
         public void success();
@@ -209,6 +230,6 @@ public class LoginController {
         int WRONG_WIFI = 0;
         int WRONG_CREDENTIALS = 1;
         int DATA_LIMIT = 2;
-        int SERVER_ERRROR = 3;
+        int SERVER_ERROR = 3;
     }
 }

@@ -20,14 +20,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="8dp">
+            android:padding="16dp">
 
             <TextView
                 android:id="@+id/accountText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Account"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -36,15 +36,17 @@
                 android:layout_height="wrap_content"
                 android:layout_below="@id/accountText"
                 android:layout_marginTop="4dp"
+                android:textSize="18sp"
                 android:text="f2014004" />
 
             <ImageView
+                android:id="@+id/delete"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_alignParentEnd="true"
                 android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
                 android:padding="4dp"
-                android:id="@+id/delete"
                 app:srcCompat="@drawable/ic_delete_black_24dp" />
         </RelativeLayout>
     </android.support.v7.widget.CardView>
@@ -53,8 +55,25 @@
         android:id="@+id/autoConnect"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
+        android:textSize="16sp"
         android:text="Auto Connect on BITS Network" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:layout_marginTop="16dp"
+            android:text="Connecting"
+            android:textColor="#000"
+            android:textSize="20sp"
+             />
+    </RelativeLayout>
 
 
 </LinearLayout>

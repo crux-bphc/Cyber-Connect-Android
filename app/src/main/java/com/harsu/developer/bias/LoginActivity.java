@@ -90,7 +90,7 @@ public class LoginActivity extends AppCompatActivity implements LoginController.
             Toast.makeText(this, "Data limit exceeded", Toast.LENGTH_SHORT).show();
         } else if (error == LoginController.Error.WRONG_WIFI) {
             Toast.makeText(this, "This connection has no Access to Bits network", Toast.LENGTH_SHORT).show();
-        } else if (error == LoginController.Error.SERVER_ERRROR)
+        } else if (error == LoginController.Error.SERVER_ERROR)
             Toast.makeText(this, "Server error occured. Please Retry", Toast.LENGTH_SHORT).show();
     }
 }
