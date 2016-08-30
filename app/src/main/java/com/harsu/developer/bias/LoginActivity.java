@@ -92,7 +92,11 @@ public class LoginActivity extends AppCompatActivity implements LoginController.
 
     private void checkSignedIn() {
         if (LoginController.containsData(this)) {
-            startActivity(new Intent(this, MainActivity.class));
+            Intent intent = new Intent(this, MainActivity.class);
+            if (getIntent().getIntExtra("extra", 0) == 1) {
+                intent.putExtra("extra", 1);
+            }
+            startActivity(intent);
             finish();
         }
     }

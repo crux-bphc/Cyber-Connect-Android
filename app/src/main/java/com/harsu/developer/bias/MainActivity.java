@@ -96,13 +96,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else {
                     progressBar.setVisibility(View.INVISIBLE);
                 }
+                setAction(statusStorer.getStatus());
             }
         });
-        if (statusStorer.getStatus() == StatusStorer.Status.DISCONNECTED) {
+        if (statusStorer.getStatus() == StatusStorer.Status.DISCONNECTED && statusStorer.getState() == StatusStorer.State.dormant) {
             LoginController.analyseNetwork(this);
         }
 
         actionB.setOnClickListener(this);
+        if (getIntent().getIntExtra("extra", 0) == 1) {
+            onClick(actionB);
+        }
     }
 
     private void setAction(int status) {
@@ -116,8 +120,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 actionB.setVisibility(View.GONE);
                 break;
             case StatusStorer.Status.CONNECTED:
-                actionB.setText("Login");
-                actionB.setVisibility(View.VISIBLE);
+                if (statusStorer.getState() == StatusStorer.State.active) {
+                    actionB.setText("");
+                    actionB.setVisibility(View.GONE);
+                } else {
+                    actionB.setText("Login");
+                    actionB.setVisibility(View.VISIBLE);
+                }
                 break;
             case StatusStorer.Status.LOGGING_IN:
                 actionB.setText("");
@@ -165,13 +174,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             switch (statusStorer.getStatus()) {
                 case StatusStorer.Status.ERROR_LOGGING:
                 case StatusStorer.Status.CONNECTED:
+                    statusStorer.setState(StatusStorer.State.active);
                     LoginController.login(this, new LoginController.ConnectionListener() {
                         @Override
                         public void success() {
+                            statusStorer.setState(StatusStorer.State.dormant);
                         }
 
                         @Override
                         public void error(int error) {
+                            statusStorer.setState(StatusStorer.State.dormant);
                             statusStorer.setStatus(StatusStorer.Status.ERROR_LOGGING);
                         }
                     });
@@ -179,9 +191,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 case StatusStorer.Status.LOGGED_IN:
                 case StatusStorer.Status.ALREADY_LOGGED_IN:
+                    statusStorer.setState(StatusStorer.State.active);
                     LoginController.logout(this, new LoginController.ConnectionListener() {
                         @Override
                         public void success() {
+                            statusStorer.setState(StatusStorer.State.dormant);
                             statusStorer.status = StatusStorer.Status.CONNECTED;
                             statusStorer.setStatus(StatusStorer.Status.CONNECTED);
                             statusTV.setText("Logged Out");
@@ -189,6 +203,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                         @Override
                         public void error(int error) {
+                            statusStorer.setState(StatusStorer.State.dormant);
                             statusTV.setText("Error Logging Out.");
                         }
                     });

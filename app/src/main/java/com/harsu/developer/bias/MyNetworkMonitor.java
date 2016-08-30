@@ -36,9 +36,16 @@ public class MyNetworkMonitor extends BroadcastReceiver {
 
         final NotificationManager mNotifyMgr =
                 (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
-        Intent resultIntent = new Intent(context, LoginActivity.class);
-        resultIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        final PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent,
+        Intent i = new Intent(context, LoginActivity.class);
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        Intent intent1 = new Intent(context, LoginActivity.class);
+        intent1.putExtra("extra", 1);
+        intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final PendingIntent actionClick = PendingIntent.getActivity(context, 124, intent, PendingIntent.FLAG_CANCEL_CURRENT );
+
+//        resultIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        final PendingIntent pendingIntent = PendingIntent.getActivity(context, 123, i,
                 PendingIntent.FLAG_UPDATE_CURRENT);
 
         if (LoginController.isConnected(context))//wifi state is connected
@@ -50,9 +57,21 @@ public class MyNetworkMonitor extends BroadcastReceiver {
                     @Override
                     public void success() {
                         //already signed in
+
                         statusStorer.setState(StatusStorer.State.dormant);
-                        if (statusStorer.getStatus() == StatusStorer.Status.CONNECTED)
+                        if (statusStorer.getStatus() == StatusStorer.Status.CONNECTED) {
+                            NotificationCompat.Builder mBuilder =
+                                    new NotificationCompat.Builder(context)
+                                            .setSmallIcon(R.drawable.notif_icon)
+                                            .setPriority(NotificationCompat.PRIORITY_MAX)
+                                            .setVibrate(new long[]{1, 1, 1})
+                                            .setContentTitle("Cyber Connect")
+                                            .setContentText("Network is Active")
+                                            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                                            .setContentIntent(pendingIntent);
+                            mNotifyMgr.notify(1, mBuilder.build());
                             firstConnect = false;
+                        }
                         statusStorer.setStatus(StatusStorer.Status.ALREADY_LOGGED_IN);
                     }
 
@@ -65,7 +84,7 @@ public class MyNetworkMonitor extends BroadcastReceiver {
                             return;
                         }
                         if (firstConnect)
-                            attemptLogIn(context, pendingIntent, mNotifyMgr);
+                            attemptLogIn(context, pendingIntent, mNotifyMgr, actionClick);
 
                     }
                 });
@@ -79,13 +98,14 @@ public class MyNetworkMonitor extends BroadcastReceiver {
         }
     }
 
-    private void attemptLogIn(final Context context, final PendingIntent pendingIntent, final NotificationManager mNotifyMgr) {
+    private void attemptLogIn(final Context context, final PendingIntent pendingIntent, final NotificationManager mNotifyMgr, final PendingIntent actionClick) {
+
         firstConnect = false;
         statusStorer.setStatus(StatusStorer.Status.LOGGING_IN);
         Log.d(TAG, "Logging in");
         final NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context)
-                        .setSmallIcon(R.mipmap.ic_launcher)
+                        .setSmallIcon(R.drawable.notif_icon)
                         .setPriority(NotificationCompat.PRIORITY_MAX)
                         .setVibrate(new long[]{1, 1, 1})
                         .setContentTitle("Cyber Connect")
@@ -99,13 +119,14 @@ public class MyNetworkMonitor extends BroadcastReceiver {
                 statusStorer.setState(StatusStorer.State.dormant);
                 NotificationCompat.Builder mBuilder =
                         new NotificationCompat.Builder(context)
-                                .setSmallIcon(R.mipmap.ic_launcher)
+                                .setSmallIcon(R.drawable.notif_icon)
                                 .setPriority(NotificationCompat.PRIORITY_MAX)
                                 .setVibrate(new long[]{1, 1, 1})
                                 .setContentTitle("Cyber Connect")
                                 .setContentText("Successfully signed in")
                                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC).setContentIntent(pendingIntent);
-                //todo add a logout button on notification
+
+//                mBuilder.addAction(R.drawable.ic_close, "Logout", actionClick);
                 mNotifyMgr.notify(1, mBuilder.build());
             }
 
@@ -130,13 +151,13 @@ public class MyNetworkMonitor extends BroadcastReceiver {
                     }
                     NotificationCompat.Builder mBuilder =
                             new NotificationCompat.Builder(context)
-                                    .setSmallIcon(R.mipmap.ic_launcher)
+                                    .setSmallIcon(R.drawable.notif_icon)
                                     .setPriority(NotificationCompat.PRIORITY_MAX)
                                     .setVibrate(new long[]{1, 1, 1})
                                     .setContentTitle("Cyber Connect")
                                     .setContentText(message)
                                     .setVisibility(NotificationCompat.VISIBILITY_PUBLIC).setContentIntent(pendingIntent);
-                    //todo add a retry Button on notification
+//                    mBuilder.addAction(android.R.drawable.ic_menu_rotate, "Retry", actionClick);
                     mNotifyMgr.notify(1, mBuilder.build());
                 }
             }

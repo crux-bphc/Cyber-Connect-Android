@@ -83,7 +83,7 @@ public class StatusStorer {
         return state;
     }
 
-    private int state = State.active;
+    private int state = State.dormant;
 
     public interface State {
         int active = 1;

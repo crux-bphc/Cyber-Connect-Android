@@ -144,7 +144,7 @@ public class LoginController {
 
             }
         };
-        stringRequest.setRetryPolicy(new DefaultRetryPolicy(2000, 0, DEFAULT_BACKOFF_MULT));
+        stringRequest.setRetryPolicy(new DefaultRetryPolicy(5000, 0, DEFAULT_BACKOFF_MULT));
         app.VolleySingleton.getInstance().getRequestQueue().add(stringRequest);
 
     }
@@ -218,6 +218,7 @@ public class LoginController {
             }
         });
         stringRequest.setShouldCache(false);
+        stringRequest.setRetryPolicy(new DefaultRetryPolicy(5000, 0, DEFAULT_BACKOFF_MULT));
         VolleySingleton.getInstance().getRequestQueue().add(stringRequest);
         return false;
     }
