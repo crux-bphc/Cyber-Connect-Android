@@ -9,6 +9,7 @@ import android.content.SharedPreferences;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
+import helper.AccountsTableManager;
 import helper.LoginController;
 import helper.StatusStorer;
 
@@ -42,7 +43,7 @@ public class MyNetworkMonitor extends BroadcastReceiver {
         Intent intent1 = new Intent(context, LoginActivity.class);
         intent1.putExtra("extra", 1);
         intent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        final PendingIntent actionClick = PendingIntent.getActivity(context, 124, intent, PendingIntent.FLAG_CANCEL_CURRENT );
+        final PendingIntent actionClick = PendingIntent.getActivity(context, 124, intent, PendingIntent.FLAG_CANCEL_CURRENT);
 
 //        resultIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         final PendingIntent pendingIntent = PendingIntent.getActivity(context, 123, i,
@@ -50,17 +51,18 @@ public class MyNetworkMonitor extends BroadcastReceiver {
 
         if (LoginController.isConnected(context))//wifi state is connected
         {
-            statusStorer.setStatus(StatusStorer.Status.CONNECTED);
+            statusStorer.setStatus(StatusStorer.Status.CONNECTED, context);
 
             if (firstConnect) {
-                LoginController.checkGoogleServer(new LoginController.ConnectionListener() {
+                statusStorer.setState(StatusStorer.State.active);
+                LoginController.getLogInID(new LoginController.ConnectionListener() {
                     @Override
                     public void success() {
                         //already signed in
 
                         statusStorer.setState(StatusStorer.State.dormant);
                         if (statusStorer.getStatus() == StatusStorer.Status.CONNECTED) {
-                            NotificationCompat.Builder mBuilder =
+                            /*NotificationCompat.Builder mBuilder =
                                     new NotificationCompat.Builder(context)
                                             .setSmallIcon(R.drawable.notif_icon)
                                             .setPriority(NotificationCompat.PRIORITY_MAX)
@@ -69,31 +71,39 @@ public class MyNetworkMonitor extends BroadcastReceiver {
                                             .setContentText("Network is Active")
                                             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                                             .setContentIntent(pendingIntent);
-                            mNotifyMgr.notify(1, mBuilder.build());
+                            mNotifyMgr.notify(1, mBuilder.build());*/
                             firstConnect = false;
                         }
-                        statusStorer.setStatus(StatusStorer.Status.ALREADY_LOGGED_IN);
+                        statusStorer.setStatus(StatusStorer.Status.ALREADY_LOGGED_IN, context);
                     }
 
                     @Override
-                    public void error(int error) {
+                    public void error(LoginController.Error error) {
                         //not signed in, or internet is extremely slow, nothing can be done
 
+                        if (error == LoginController.Error.WRONG_WIFI) {
+                            statusStorer.setState(StatusStorer.State.dormant);
+                            statusStorer.setStatus(StatusStorer.Status.NOT_BITS_NETWORK, context);
+                            return;
+                        }
                         if (!sharedPreferences.getBoolean("autoConnect", true)) {
                             statusStorer.setState(StatusStorer.State.dormant);
+                            statusStorer.setStatus(StatusStorer.Status.CONNECTED, context);
                             return;
                         }
                         if (firstConnect)
                             attemptLogIn(context, pendingIntent, mNotifyMgr, actionClick);
 
                     }
-                });
+                }, context);
 
             }
         } else {
             mNotifyMgr.cancel(1);
-            statusStorer.setStatus(StatusStorer.Status.DISCONNECTED);
+            statusStorer.setStatus(StatusStorer.Status.DISCONNECTED,context);
             firstConnect = true;
+            AccountsTableManager accountsTableManager = new AccountsTableManager(context);
+            accountsTableManager.setLoggedIn("");
             statusStorer.setState(StatusStorer.State.active);
         }
     }
@@ -101,7 +111,7 @@ public class MyNetworkMonitor extends BroadcastReceiver {
     private void attemptLogIn(final Context context, final PendingIntent pendingIntent, final NotificationManager mNotifyMgr, final PendingIntent actionClick) {
 
         firstConnect = false;
-        statusStorer.setStatus(StatusStorer.Status.LOGGING_IN);
+        statusStorer.setStatus(StatusStorer.Status.LOGGING_IN,context);
         Log.d(TAG, "Logging in");
         final NotificationCompat.Builder mBuilder =
                 new NotificationCompat.Builder(context)
@@ -131,16 +141,14 @@ public class MyNetworkMonitor extends BroadcastReceiver {
             }
 
             @Override
-            public void error(int error) {
+            public void error(LoginController.Error error) {
                 statusStorer.setState(StatusStorer.State.dormant);
                 firstConnect = false;
                 statusStorer.setError(error);
                 if (error == LoginController.Error.WRONG_WIFI) {
                     mNotifyMgr.cancel(1);
-                    statusStorer.setStatus(StatusStorer.Status.NOT_BITS_NETWORK);
-
                 } else {
-                    statusStorer.setStatus(StatusStorer.Status.ERROR_LOGGING);
+
                     String message = "";
                     if (error == LoginController.Error.SERVER_ERROR) {
                         message = "Server error";

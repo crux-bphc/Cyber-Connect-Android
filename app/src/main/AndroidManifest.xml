@@ -29,7 +29,9 @@
         </receiver>
 
         <activity android:name=".MainActivity" />
-        <activity android:name=".InfoActivity"></activity>
+        <activity android:name=".InfoActivity" />
+        <activity android:name=".AddAccountActivity"
+            android:label="Add An Account"></activity>
     </application>
 
 </manifest>

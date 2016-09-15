@@ -1,7 +1,7 @@
 package helper;
 
+
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.SupplicantState;
@@ -16,9 +16,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
-import com.harsu.developer.bias.LoginActivity;
 
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,43 +45,25 @@ public class LoginController {
 
         }
         return false;
-        /*if (netInfo != null && netInfo.isConnected()) {
-            try {
-                Runtime runtime = Runtime.getRuntime();
-                Process proc = runtime.exec("ping -c 1 " + "google.com");
-                proc.waitFor();
-                int exitCode = proc.exitValue();
-                if (exitCode == 0) {
-                    Log.d("Ping", "Ping successful!");
-                    return true;
-                } else {
-                    Log.d("Ping", "Ping unsuccessful.");
-                    return false;
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                return false;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        }
-        return false;*/
     }
 
     public static void login(Context context, @Nullable final ConnectionListener listener) {
-        final SharedPreferences sharedPreferences = context.getSharedPreferences(LoginActivity.CREDENTIALS, Context.MODE_PRIVATE);
-
-        login(sharedPreferences.getString("username", ""), sharedPreferences.getString("password", ""), listener);
+        AccountsTableManager mTableManager = new AccountsTableManager(context);
+        AccountsSet accountsSet = mTableManager.getPreferred();
+        if (accountsSet != null)
+            login(accountsSet, context, listener);
     }
 
     public static boolean containsData(Context context) {
 
-        final SharedPreferences sharedPreferences = context.getSharedPreferences(LoginActivity.CREDENTIALS, Context.MODE_PRIVATE);
-        return !sharedPreferences.getString("username", "").isEmpty();
+        AccountsTableManager mTableManager = new AccountsTableManager(context);
+        if (mTableManager.getPreferred() == null) {
+            return false;
+        } else
+            return true;
     }
 
-    public static void login(final String username, final String password, final ConnectionListener listener) {
+    public static void login(final AccountsSet accountsSet, final Context context, final ConnectionListener listener) {
         final StatusStorer statusStorer = StatusStorer.getInstance();
         StringRequest stringRequest = new StringRequest(Request.Method.POST, loginURL, new Response.Listener<String>() {
             @Override
@@ -97,17 +77,30 @@ public class LoginController {
                 //data limit error contains
                 //Your data transfer has been exceeded, Please contact the administrator
 
+                //<?xml version='1.0' ?><requestresponse><status><![CDATA[LOGIN]]></status><message><![CDATA[The system could not log you on. Make sure your password is correct]]></message><logoutmessage><![CDATA[You have successfully logged off]]></logoutmessage><state><![CDATA[]]></state></requestresponse>
+
+
                 Log.e("response", s);
                 if (listener != null) {
                     if (s.contains("You have successfully logged in")) {
+                        AccountsTableManager accountsTableManager = new AccountsTableManager(context);
+                        if (accountsSet.getId() == -1)
+                            accountsTableManager.addEntry(accountsSet.getUsername(), accountsSet.getPassword(), accountsSet.getPreference());
+                        accountsTableManager.setLoggedIn(accountsSet.getUsername());
+                        statusStorer.setStatus(StatusStorer.Status.LOGGED_IN, context);
                         listener.success();
-                        statusStorer.setStatus(StatusStorer.Status.LOGGED_IN);
                     } else if (s.contains("Your data transfer has been exceeded")) {
+                        statusStorer.setStatus(StatusStorer.Status.ERROR_LOGGING, context);
                         listener.error(Error.DATA_LIMIT);
-                    } else if (s.contains("Your credentials were incorrect")) {
+                    } else if (s.contains("Make sure your password is correct")) {
+                        statusStorer.setStatus(StatusStorer.Status.ERROR_LOGGING, context);
                         listener.error(Error.WRONG_CREDENTIALS);
                     } else if (s.contains("Server is not responding.")) {
+                        statusStorer.setStatus(StatusStorer.Status.ERROR_LOGGING, context);
                         listener.error(Error.SERVER_ERROR);
+                    } else {
+                        statusStorer.setStatus(StatusStorer.Status.ERROR_LOGGING, context);
+                        listener.error(Error.UNKNOWN_ERROR);
                     }
                 }
 
@@ -119,6 +112,7 @@ public class LoginController {
 
                 if (listener != null) {
                     listener.error(Error.WRONG_WIFI);
+                    statusStorer.setStatus(StatusStorer.Status.NOT_BITS_NETWORK, context);
                 }
             }
         }) {
@@ -135,10 +129,10 @@ public class LoginController {
 
                 Map<String, String> params = new HashMap<String, String>();
                 params.put("mode", "191");
-                params.put("username", username);
-                params.put("password", password);
-                params.put("a", String.valueOf(Calendar.getInstance().getTimeInMillis()));
-                params.put("producttype", "0");
+                params.put("username", accountsSet.getUsername());
+                params.put("password", accountsSet.getPassword());
+//                params.put("a", String.valueOf(Calendar.getInstance().getTimeInMillis()));
+//                params.put("producttype", "0");
 
                 return params;
 
@@ -149,10 +143,13 @@ public class LoginController {
 
     }
 
-
-    public static void logout(Context context, @Nullable final ConnectionListener listener) {
+    public static void logout(final Context context, @Nullable final ConnectionListener listener) {
         final StatusStorer statusStorer = StatusStorer.getInstance();
-        final SharedPreferences sharedPreferences = context.getSharedPreferences(LoginActivity.CREDENTIALS, Context.MODE_PRIVATE);
+        final AccountsTableManager mTableManager = new AccountsTableManager(context);
+        /*if (mTableManager.getLoggedInAccount() == null) {
+            listener.error(Error.UNKNOWN_ERROR);
+            return;
+        }*/
         StringRequest stringRequest = new StringRequest(Request.Method.POST, logoutURL, new Response.Listener<String>() {
             @Override
             public void onResponse(String s) {
@@ -162,6 +159,7 @@ public class LoginController {
                 Log.e("response", s);
                 if (listener != null) {
                     if (s.contains("You have successfully logged off")) {
+                        statusStorer.setStatus(StatusStorer.Status.CONNECTED, context);
                         listener.success();
                     } else if (s.contains("Server is not responding.")) {
                         listener.error(Error.SERVER_ERROR);
@@ -173,8 +171,9 @@ public class LoginController {
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError volleyError) {
-
+                statusStorer.setStatus(StatusStorer.Status.NOT_BITS_NETWORK, context);
                 if (listener != null) {
+
                     listener.error(Error.WRONG_WIFI);
                 }
             }
@@ -193,7 +192,7 @@ public class LoginController {
 
                 Map<String, String> params = new HashMap<String, String>();
                 params.put("mode", "193");
-                params.put("username", sharedPreferences.getString("username", ""));
+                params.put("username", "xyz");
                 //Other parameters such are time, producttype are not needed, even for login
                 return params;
 
@@ -223,13 +222,13 @@ public class LoginController {
         return false;
     }
 
-    public static void analyseNetwork(final Context context) {
+  /*  public static void analyseNetwork(final Context context) {
         final StatusStorer statusStorer = StatusStorer.getInstance();
         statusStorer.setState(StatusStorer.State.active);
         if (LoginController.isConnected(context))//wifi state is connected
         {
             statusStorer.setStatus(StatusStorer.Status.CONNECTED);
-            LoginController.checkGoogleServer(new ConnectionListener() {
+            LoginController.getLogInID(new ConnectionListener() {
                 @Override
                 public void success() {
                     statusStorer.setStatus(StatusStorer.Status.ALREADY_LOGGED_IN);
@@ -238,28 +237,94 @@ public class LoginController {
 
                 @Override
                 public void error(int error) {
+
                     statusStorer.setState(StatusStorer.State.dormant);
+                    if (error == Error.WRONG_WIFI) {
+                        statusStorer.setStatus(StatusStorer.Status.NOT_BITS_NETWORK);
+                    }
                     //not signed in, or internet is extremely slow, nothing can be done
                 }
-            });
+            }, context);
 
         } else {
             statusStorer.setState(StatusStorer.State.dormant);
         }
 
+    }*/
+
+    private static void isBitsID(final ConnectionListener listener) {
+
+        StringRequest stringRequest = new StringRequest(Request.Method.GET, loginURL, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String s) {
+                Log.e("resp", s);
+                listener.success();
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError volleyError) {
+                Log.e("Error", volleyError.toString());
+                listener.error(Error.WRONG_WIFI);
+            }
+        });
+        VolleySingleton.getInstance().getRequestQueue().add(stringRequest);
     }
 
+    public static void getLogInID(final ConnectionListener listener, final Context context) {
+        isBitsID(new ConnectionListener() {
+            @Override
+            public void success() {
+
+                //is Bits network, get ID by pinging miniclip.
+                //I Hope MiniClip doesn't get un-blocked. :P
+                StringRequest stringRequest = new StringRequest(Request.Method.GET, "http://www.miniclip.com/", new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String s) {
+                        ///if not Logged in,
+                        //location.href="http://172.16.0.30:8090/httpclient.html"
+                        if (!s.contains("@bits-hyderabad.ac.in")) {
+                            listener.error(Error.NOT_CONNECTED);     //not connected
+                            return;
+                        }
+
+                        s = s.substring(0, s.indexOf("@bits-hyderabad.ac.in"));
+                        s = s.substring(s.lastIndexOf('>') + 1);
+                        Log.e("id", s);
+                        AccountsTableManager mTableManager = new AccountsTableManager(context);
+                        mTableManager.setLoggedIn(s);
+                        listener.success();
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError volleyError) {
+                        listener.error(Error.SERVER_ERROR);
+                    }
+                });
+                VolleySingleton.getInstance().getRequestQueue().add(stringRequest);
+            }
+
+            @Override
+            public void error(Error error) {
+                listener.error(Error.WRONG_WIFI);
+            }
+        });
+
+    }
+
+
+    public enum Error {
+        WRONG_WIFI,
+        WRONG_CREDENTIALS,
+        DATA_LIMIT,
+        SERVER_ERROR,
+        UNKNOWN_ERROR,
+        NOT_CONNECTED,
+
+    }
 
     public interface ConnectionListener {
-        public void success();
+        void success();
 
-        public void error(int error);
-    }
-
-    public interface Error {
-        int WRONG_WIFI = 0;
-        int WRONG_CREDENTIALS = 1;
-        int DATA_LIMIT = 2;
-        int SERVER_ERROR = 3;
+        void error(Error error);
     }
 }

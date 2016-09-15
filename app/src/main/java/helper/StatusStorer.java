@@ -1,5 +1,6 @@
 package helper;
 
+import android.content.Context;
 import android.support.annotation.Nullable;
 
 /**
@@ -9,9 +10,10 @@ import android.support.annotation.Nullable;
 public class StatusStorer {
 
     static StatusStorer mInstance;
-    public int status = Status.DISCONNECTED;
+    public Status status = Status.DISCONNECTED;
     StatusListener listener;
-    private int error;
+    private LoginController.Error error;
+    private State state = State.dormant;
 
     private StatusStorer() {
 
@@ -24,11 +26,16 @@ public class StatusStorer {
         return mInstance;
     }
 
-    public int getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(int status) {
+    public void setStatus(Status status, Context context) {
+
+        if (status != Status.ALREADY_LOGGED_IN && status != Status.LOGGED_IN) {
+            AccountsTableManager accountsTableManager = new AccountsTableManager(context);
+            accountsTableManager.setLoggedIn("");
+        }
         if (this.status == Status.LOGGED_IN || this.status == Status.ERROR_LOGGING || this.status == Status.ALREADY_LOGGED_IN) {
             if (status == Status.CONNECTED || status == Status.ALREADY_LOGGED_IN) {
                 return;
@@ -42,19 +49,19 @@ public class StatusStorer {
 
     public String getStatusText() {
         switch (status) {
-            case Status.ERROR_LOGGING:
+            case ERROR_LOGGING:
                 return "Error Occurred While Logging In";
-            case Status.NOT_BITS_NETWORK:
+            case NOT_BITS_NETWORK:
                 return "Not A Bits Network";
-            case Status.CONNECTED:
+            case CONNECTED:
                 return "Connected to a Wifi Network";
-            case Status.LOGGING_IN:
+            case LOGGING_IN:
                 return "Attempting To Log In";
-            case Status.LOGGED_IN:
+            case LOGGED_IN:
                 return "Successfully Signed In";
-            case Status.DISCONNECTED:
+            case DISCONNECTED:
                 return "Not Connected To A Wifi Network";
-            case Status.ALREADY_LOGGED_IN:
+            case ALREADY_LOGGED_IN:
                 return "The network is Active";
         }
         return "";
@@ -64,45 +71,42 @@ public class StatusStorer {
         this.listener = listener;
     }
 
-    public int getError() {
+    public LoginController.Error getError() {
         return error;
     }
 
-    public void setError(int error) {
+    public void setError(LoginController.Error error) {
         this.error = error;
     }
 
-    public void setState(int st) {
+    public State getState() {
+        return state;
+    }
+
+    public void setState(State st) {
         state = st;
         if (listener != null) {
             listener.newState(st);
         }
     }
 
-    public int getState() {
-        return state;
+    public enum State {
+        active, dormant
     }
 
-    private int state = State.dormant;
-
-    public interface State {
-        int active = 1;
-        int dormant = 2;
-    }
-
-    public interface Status {
-        int ERROR_LOGGING = -1;
-        int NOT_BITS_NETWORK = 0;
-        int CONNECTED = 1;
-        int LOGGING_IN = 2;
-        int LOGGED_IN = 3;
-        int DISCONNECTED = 4;
-        int ALREADY_LOGGED_IN = 5;
+    public enum Status {
+        ERROR_LOGGING,
+        NOT_BITS_NETWORK,
+        CONNECTED,
+        LOGGING_IN,
+        LOGGED_IN,
+        DISCONNECTED,
+        ALREADY_LOGGED_IN
     }
 
     public interface StatusListener {
         void newStatus(String status);
 
-        void newState(int state);
+        void newState(State state);
     }
 }
