@@ -50,7 +50,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        context=this;
+        context = this;
 
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
         mAdapter = new AccountsAdapter(this);
@@ -128,7 +128,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void success() {
                 reloadData();
-                statusStorer.setStatus(StatusStorer.Status.ALREADY_LOGGED_IN,context);
+                statusStorer.setStatus(StatusStorer.Status.ALREADY_LOGGED_IN, context);
                 statusStorer.setState(StatusStorer.State.dormant);
             }
 
@@ -136,9 +136,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void error(LoginController.Error error) {
                 statusStorer.setState(StatusStorer.State.dormant);
                 if (error == LoginController.Error.WRONG_WIFI)
-                    statusStorer.setStatus(StatusStorer.Status.NOT_BITS_NETWORK,context);
+                    statusStorer.setStatus(StatusStorer.Status.NOT_BITS_NETWORK, context);
                 else {
-                    statusStorer.setStatus(StatusStorer.Status.CONNECTED,context);
+                    statusStorer.setStatus(StatusStorer.Status.CONNECTED, context);
                 }
             }
         }, this);
@@ -226,7 +226,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                             statusStorer.setState(StatusStorer.State.dormant);
                             statusStorer.status = StatusStorer.Status.CONNECTED;
-                            statusStorer.setStatus(StatusStorer.Status.CONNECTED,context);
+                            statusStorer.setStatus(StatusStorer.Status.CONNECTED, context);
                             statusTV.setText("Logged Out");
                             mTableManager.setLoggedIn("");
                             reloadData();
@@ -303,24 +303,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         alertDialog.setTitle(accountsSet.getUsername());
         final ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
                 MainActivity.this,
-                android.R.layout.select_dialog_singlechoice);
+                android.R.layout.select_dialog_item);
+        arrayAdapter.add("Set as Preferred Account");
         arrayAdapter.add("Log In using the Account");
         arrayAdapter.add("Delete the Account");
-        arrayAdapter.add("Set as Preferred Account");
+
 
         alertDialog.setAdapter(arrayAdapter, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 switch (i) {
-                    case 0:
+                    case 1:
                         //login
                         onConnectClick(position);
                         return;
-                    case 1:
+                    case 2:
                         //delete
                         onDeleteClick(position);
                         return;
-                    case 2:
+                    case 0:
                         mTableManager.setPreference(accountsSet.getId());
                         reloadData();
                         return;
@@ -345,7 +346,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void error(LoginController.Error error) {
         statusStorer.setState(StatusStorer.State.dormant);
-        statusStorer.setStatus(StatusStorer.Status.ERROR_LOGGING,context);
+        statusStorer.setStatus(StatusStorer.Status.ERROR_LOGGING, context);
     }
 
 
