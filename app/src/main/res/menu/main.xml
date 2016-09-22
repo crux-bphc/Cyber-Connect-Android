@@ -7,4 +7,9 @@
         android:icon="@drawable/ic_information_outline"
         android:title="Info"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/share"
+        android:icon="@drawable/ic_share_variant"
+        android:title="Share"
+        app:showAsAction="ifRoom"/>
 </menu>

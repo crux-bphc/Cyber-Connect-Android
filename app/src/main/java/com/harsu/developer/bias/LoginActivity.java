@@ -61,6 +61,14 @@ public class LoginActivity extends AppCompatActivity implements LoginController.
         if (item.getItemId() == R.id.info) {
             startActivity(new Intent(this, InfoActivity.class));
             return true;
+        }else if (item.getItemId() == R.id.share) {
+            final String appPackageName = getPackageName();
+            Intent intent2 = new Intent();
+            intent2.setAction(Intent.ACTION_SEND);
+            intent2.setType("text/plain");
+            intent2.putExtra(Intent.EXTRA_TEXT, "Hey view this app from CRUx BPHC, https://play.google.com/store/apps/details?id=" + appPackageName +
+                    " . It allows you to automatically connect to CyberRoam. Do give it a try. :) ");
+            startActivity(Intent.createChooser(intent2, "Share via"));
         }
         return super.onOptionsItemSelected(item);
     }
